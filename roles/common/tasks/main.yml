@@ -1,0 +1,58 @@
+---
+- name: ensure required system packages installed and latest versions
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg-agent
+      - jq
+      - python3-pip
+      - software-properties-common
+      - unzip
+      - vim
+      - tmux
+      - wget
+    state: latest
+    update_cache: yes
+
+- import_tasks: docker-ce.yml
+- import_tasks: iptables.yml
+- import_tasks: modules.yml
+- import_tasks: swap.yml
+
+# NOTE: This insecure SSH key built into images and will be removed during deploy.
+- name: ensure ansible.id_rsa.pub key exclusively authorized on all machines
+  authorized_key:
+    key: "{{ lookup('file', 'ansible.id_rsa.pub') }}"
+    user: ansible
+    exclusive: yes
+    state: present
+
+- name: Ensure net.bridge.bridge-nf-call-iptables=1
+  sysctl:
+    key: net.bridge.bridge-nf-call-iptables
+    value: '1'
+    state: present
+    reload: true
+
+- name: Allow tcp forwarding in sshd config
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^AllowTcpForwarding'
+    line: 'AllowTcpForwarding yes'
+  notify: restart sshd service
+
+- name: notify restart sshd service handler in case of the need
+  meta: flush_handlers
+
+#- name: Allow all access to 6443
+#  ufw:
+#    rule: allow
+#    port: 6443
+
+# TODO: Fix this to allow only necessary ports
+- name: Allow everything and enable UFW
+  ufw:
+    state: enabled
+    policy: allow

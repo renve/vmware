@@ -1,0 +1,25 @@
+---
+- name: ensure {{ rke_config_dir }} directory exists
+  file:
+    path: "{{ rke_config_dir }}"
+    state: directory
+
+- name: create a temp dir for rendering templates
+  file:
+    state: directory
+    path: "{{ temp_dir }}/cert-manager"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Ensure $HOME/.kube exists
+  file:
+    path: "/home/{{ ansible_user }}/.kube"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+
+- name: ensure /root/.kube exists
+  file:
+    path: "/root/.kube"
+    state: directory

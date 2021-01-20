@@ -1,0 +1,101 @@
+---
+- name: ensure RKE and Rancher images save/load scripts installed
+  copy:
+    src: "{{ item }}"
+    dest: "/home/{{ ansible_user }}/"
+    mode: 0775
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  with_items:
+    - rancher-load-images.sh
+    - rancher-save-images.sh
+
+- name: store information about /home/{{ ansible_user }}/rke-images.txt-processed file presense
+  stat:
+    path: "/home/{{ ansible_user }}/rke-images.txt-processed"
+  register: rke_images_txt_processed
+  changed_when: false
+  failed_when: false
+  check_mode: no
+
+- name: ensure rke-images.txt with images lists present and up to date
+  copy:
+    src: "rke-images.txt"
+    dest: "/home/{{ ansible_user }}/rke-images.txt"
+    mode: 0664
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  when: not rke_images_txt_processed.stat.exists
+
+- name: store information about /home/{{ ansible_user }}/rancher-images.txt-processed file presense
+  stat:
+    path: "/home/{{ ansible_user }}/rancher-images.txt-processed"
+  register: rancher_images_txt_processed
+  changed_when: false
+  failed_when: false
+  check_mode: no
+
+- name: ensure rancher-images.txt with images lists present and up to date
+  copy:
+    src: "rancher-images.txt"
+    dest: "/home/{{ ansible_user }}/rancher-images.txt"
+    mode: 0664
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  when: not rancher_images_txt_processed.stat.exists
+
+- name: store information about /home/{{ ansible_user }}/rke-images.txt file presense
+  stat:
+    path: "/home/{{ ansible_user }}/rke-images.txt"
+  register: rke_images_txt
+  changed_when: false
+  failed_when: false
+  check_mode: no
+
+- name: ensure RKE containers images present in local Docker cache
+  shell: "/home/{{ ansible_user }}/rancher-save-images.sh --image-list /home/{{ ansible_user }}/rke-images.txt"
+  when: rke_images_txt.stat.exists
+
+- name: ensure RKE containers images moved/pushed to private registry
+  shell: "/home/{{ ansible_user }}/rancher-load-images.sh --image-list /home/{{ ansible_user }}/rke-images.txt --registry {{ registry_address }}"
+  when: rke_images_txt.stat.exists
+
+- name: ensure processed rke-images.txt renamed to rke-images.txt-processed
+  copy:
+    remote_src: True
+    src: "/home/{{ ansible_user }}/rke-images.txt"
+    dest: "/home/{{ ansible_user }}/rke-images.txt-processed"
+  when: rke_images_txt.stat.exists
+
+- name: ensure /home/{{ ansible_user }}/rke-images.txt file absent once import is finished
+  file:
+    path: "/home/{{ ansible_user }}/rke-images.txt"
+    state: absent
+
+- name: store information about /home/{{ ansible_user }}/rancher-images.txt file presense
+  stat:
+    path: "/home/{{ ansible_user }}/rancher-images.txt"
+  register: rancher_images_txt
+  changed_when: false
+  failed_when: false
+  check_mode: no
+
+- name: ensure Rancher containers images present in local Docker cache
+  shell: "/home/{{ ansible_user }}/rancher-save-images.sh --image-list /home/{{ ansible_user }}/rancher-images.txt"
+  when: rancher_images_txt.stat.exists
+
+- name: ensure Rancher containers images moved/pushed to private registry
+  shell: "/home/{{ ansible_user }}/rancher-load-images.sh --image-list /home/{{ ansible_user }}/rancher-images.txt --registry {{ registry_address }}"
+  when: rancher_images_txt.stat.exists
+
+- name: ensure processed rancher-images.txt renamed to rancher-images.txt-processed
+  copy:
+    remote_src: True
+    src: "/home/{{ ansible_user }}/rancher-images.txt"
+    dest: "/home/{{ ansible_user }}/rancher-images.txt-processed"
+  when: rancher_images_txt.stat.exists
+
+- name: ensure /home/{{ ansible_user }}/rancher-images.txt file absent once import is finished
+  file:
+    path: "/home/{{ ansible_user }}/rancher-images.txt"
+    state: absent

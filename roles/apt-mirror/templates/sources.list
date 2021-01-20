@@ -1,0 +1,6 @@
+deb [arch=amd64 trusted=yes] http://{{ ansible_host }}:8808/ubuntu/mirror/us.archive.ubuntu.com/ubuntu focal main restricted
+deb [arch=amd64 trusted=yes] http://{{ ansible_host }}:8808/ubuntu/mirror/us.archive.ubuntu.com/ubuntu focal-updates main restricted
+deb [arch=amd64 trusted=yes] http://{{ ansible_host }}:8808/ubuntu/mirror/security.ubuntu.com/ubuntu focal-security main restricted
+
+deb [arch=amd64 trusted=yes] http://{{ ansible_host }}:8808/ubuntu/mirror/download.docker.com/linux/ubuntu focal stable
+deb [arch=amd64 trusted=yes] http://{{ ansible_host }}:8808/ubuntu/mirror/baltocdn.com/helm/stable/debian/ all main

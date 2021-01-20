@@ -1,0 +1,9 @@
+.idea/
+vmdk-bastion/
+vmdk-workers/
+packer_cache/
+venv/
+*.hwm
+*.pwd
+*.pwi
+*.zip

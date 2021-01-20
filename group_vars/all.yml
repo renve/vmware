@@ -1,0 +1,7 @@
+---
+ansible_user: ansible
+rancher_certmanager_version: "0.12.0"
+rancher_version: "2.5.2"
+
+rke_config_dir: "/home/ansible/rke"
+temp_dir: "/home/ansible/temp_dir"

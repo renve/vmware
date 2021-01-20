@@ -1,0 +1,89 @@
+---
+- name: ensure apache2 package installed and latest version
+  apt:
+    name: apache2
+    state: latest
+    update_cache: yes
+  notify: restart apache2 service
+
+- name: ensure 000-default.conf installed and has correct permissions
+  copy:
+    src: 000-default.conf
+    dest: /etc/apache2/sites-available/000-default.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart apache2 service
+
+- name: ensure ports.conf installed and has correct permissions
+  copy:
+    src: ports.conf
+    dest: /etc/apache2/ports.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart apache2 service
+
+- name: ensure apache2 service started and enabled on boot
+  service:
+    name: apache2
+    enabled: yes
+    state: started
+
+- name: ensure apt-mirror package installed and latest version
+  apt:
+    name: apt-mirror
+    state: latest
+    update_cache: yes
+
+- name: install patched apt-mirror script to solve launchpad bug 1825755
+  get_url:
+    url: https://raw.githubusercontent.com/Stifler6996/apt-mirror/master/apt-mirror
+    dest: /usr/bin/apt-mirror
+    owner: root
+    group: root
+    mode: 0755
+  notify: apt-mirror
+
+- name: ensure /var/www/html/ubuntu directory exists and has correct permissions
+  file:
+    path: /var/www/html/ubuntu
+    state: directory
+    owner: www-data
+    group: www-data
+
+- name: ensure /var/www/html/ubuntu/var directory exists and has correct permissions
+  file:
+    path: /var/www/html/ubuntu/var
+    state: directory
+    owner: root
+    group: root
+
+- name: ensure postmirror.sh script installed and has correct permissions
+  copy:
+    src: postmirror.sh
+    dest: /var/www/html/ubuntu/var/postmirror.sh
+    owner: apt-mirror
+    group: apt-mirror
+    mode: 0644
+
+- name: ensure /etc/apt/mirror.list installed and latest version
+  copy:
+    src: mirror.list
+    dest: /etc/apt/mirror.list
+    owner: root
+    group: root
+    mode: 0644
+  notify: apt-mirror
+
+- name: notify apt-mirror handler in case of mirror.list updates
+  meta: flush_handlers
+
+# TODO: Move this somewhere to install during offline deploy phase
+- name: ensure sources.list installed and has correct permissions
+  template:
+    src: sources.list
+    dest: /etc/apt/sources.list
+    owner: root
+    group: root
+    mode: 0644

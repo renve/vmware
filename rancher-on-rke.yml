@@ -1,0 +1,8 @@
+- name: ensure RKE bootstrapped and configuration files installed
+  hosts: cluster_hosts
+  roles:
+    - rancher-on-rke
+  gather_facts: false
+  vars:
+    registry_address: "172.16.1.131:5000"
+  become: true

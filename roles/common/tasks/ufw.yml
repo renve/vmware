@@ -1,0 +1,5 @@
+---
+- name: Allow everything and enable UFW
+  ufw:
+    state: enabled
+    policy: allow

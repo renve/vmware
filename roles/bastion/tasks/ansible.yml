@@ -1,0 +1,13 @@
+---
+- name: ensure ansible package installed and latest version
+  apt:
+    update_cache: true
+    name: ansible
+
+- name: ensure ansible.id_rsa private key installed with correct permissions
+  copy:
+    src: ansible.id_rsa
+    dest: "/home/{{ ansible_user }}/.ssh/ansible.id_rsa"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0600

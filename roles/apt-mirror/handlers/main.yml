@@ -1,0 +1,11 @@
+---
+- name: restart apache2 service
+  service:
+    name: apache2
+    state: restarted
+
+# NOTE: Initial mirroring takes up to 120 minutes to fetch 38 GB of archives...
+- name: apt-mirror
+  command: apt-mirror
+  async: 7200  # 120 minutes
+  poll: 5  # avoid timeouts

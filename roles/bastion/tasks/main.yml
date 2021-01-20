@@ -1,0 +1,7 @@
+---
+- import_tasks: ansible.yml
+- import_tasks: binaries.yml
+- import_tasks: directories.yml
+- import_tasks: registry.yml
+- import_tasks: helm.yml
+- import_tasks: images.yml

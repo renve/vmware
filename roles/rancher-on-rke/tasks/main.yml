@@ -1,0 +1,142 @@
+---
+- name: ensure net.ipv4.ip_forward sysctl option is enabled on all machines
+  sysctl:
+    name: net.ipv4.ip_forward
+    state: present
+    reload: yes
+    value: '1'
+
+- name: ensure daemon.json file installed and configured to allow insecure registries
+  template:
+    src: daemon.json
+    dest: "/etc/docker/daemon.json"
+    mode: u=rw,g=r,o=
+  notify: restart docker service
+
+- name: restart docker service in case of daemon.json updates
+  meta: flush_handlers
+
+- name: ensure RKE cluster configuration file installed and up to date
+  local_action:
+    module: template
+    src: cluster.yml
+    dest: "{{ rke_config_dir }}/cluster.yml"
+    mode: u=rw,g=r,o=
+  run_once: True
+
+- name: store information about cluster.rkestate file presense
+  local_action:
+    module: stat
+    path: "{{ rke_config_dir }}/cluster.rkestate"
+  register: cluster_rkestate
+  changed_when: false
+  failed_when: false
+  check_mode: no
+
+- name: issue RKE install on fresh machine or in case of force re-configuration
+  local_action:
+    module: command
+    cmd: rke up
+    chdir: "{{ rke_config_dir }}"
+  when: cluster_rkestate.stat.exists == False or rke_force_configure
+  run_once: True
+
+- name: ensure kubeconfig installed to /home/{{ ansible_user }}/.kube/config
+  local_action:
+    module: copy
+    remote_src: yes
+    src: "{{ rke_config_dir }}/kube_config_cluster.yml"
+    dest: "/home/{{ ansible_user }}/.kube/config"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0600
+  run_once: True
+
+- name: copy kubeconfig to root location
+  local_action:
+    module: copy
+    remote_src: yes
+    src: "{{ rke_config_dir }}/kube_config_cluster.yml"
+    dest: "/root/.kube/config"
+    owner: root
+    group: root
+    mode: 0600
+  run_once: True
+
+- name: create cert-manager namespace
+  local_action:
+    module: shell
+    cmd: kubectl create ns cert-manager --dry-run -o yaml | kubectl apply -f -
+  when: cluster_rkestate.stat.exists == False or rke_force_configure
+  run_once: True
+
+- name: render cert-manager template
+  local_action:
+    module: command
+    cmd: >
+      helm template cert-manager {{ temp_dir }}/cert-manager-v{{ rancher_certmanager_version }}.tgz --output-dir {{ temp_dir }}
+        --namespace cert-manager
+        --set image.repository={{ registry_address }}/quay.io/jetstack/cert-manager-controller
+        --set webhook.image.repository={{ registry_address }}/quay.io/jetstack/cert-manager-webhook
+        --set cainjector.image.repository={{ registry_address }}/quay.io/jetstack/cert-manager-cainjector
+        --set installCRDs=true
+  when: cluster_rkestate.stat.exists == False or rke_force_configure
+  run_once: True
+
+- name: apply cert-manager definitions
+  local_action:
+    module: command
+    cmd: kubectl apply -R -f {{ temp_dir }}/cert-manager
+  when: cluster_rkestate.stat.exists == False or rke_force_configure
+  run_once: True
+
+- name: wait for cert-manager pods to be ready
+  local_action:
+    module: command
+    cmd: kubectl -n cert-manager wait --timeout=600s --for=condition=Ready pod -l app.kubernetes.io/instance=cert-manager
+  changed_when: false
+  run_once: True
+
+- name: ensure {{ rancher_url }} will be resolved from all Rancher nodes
+  lineinfile:
+    path: /etc/hosts
+    regexp: "^.* {{ rancher_url}}"
+    line: "{{ ansible_host}} {{ rancher_url }}"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: create cattle-system namespace
+  local_action:
+    module: command
+    cmd: kubectl create namespace cattle-system
+  when: cluster_rkestate.stat.exists == False or rke_force_configure
+  run_once: True
+
+- name: render rancher-stable template
+  local_action:
+    module: command
+    cmd: >
+      helm template rancher {{ temp_dir }}/rancher-{{ rancher_version }}.tgz --output-dir {{ temp_dir }}
+        --namespace cattle-system
+        --set hostname={{ rancher_url }}
+        --set certmanager.version=v{{ rancher_certmanager_version }}
+        --set rancherImage={{ registry_address }}/rancher/rancher
+        --set systemDefaultRegistry={{ registry_address }}
+        --set useBundledSystemChart=true
+  when: cluster_rkestate.stat.exists == False or rke_force_configure
+  run_once: True
+
+- name: apply rancher definitions
+  local_action:
+    module: command
+    cmd: kubectl apply -n cattle-system -R -f {{ temp_dir }}/rancher
+  when: cluster_rkestate.stat.exists == False or rke_force_configure
+  run_once: True
+
+- name: wait for rancher pods to be ready
+  local_action:
+    module: command
+    cmd: kubectl -n cattle-system wait --timeout=600s --for=condition=Ready pod -l app=rancher
+  changed_when: false
+  run_once: True

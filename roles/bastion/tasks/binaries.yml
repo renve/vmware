@@ -1,0 +1,25 @@
+---
+- name: ensure RKE {{ rke_release }} downloaded and installed
+  get_url:
+    url: "{{ rke_binary_url }}"
+    dest: /usr/local/bin/rke
+    mode: "+rx"
+  register: rke_binary
+
+- name: ensure kubectl {{ kubectl_version }} downloaded and installed
+  get_url:
+    url: "https://storage.googleapis.com/kubernetes-release/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
+    dest: /usr/local/bin/kubectl
+    mode: "+rx"
+
+- name: ensure kompose is installed 
+  get_url:
+    url: "https://github.com/kubernetes/kompose/releases/download/{{ kompose_version }}/kompose-linux-amd64"
+    dest: /usr/local/bin/kompose
+    mode: "+rx"
+
+- name: ensure calicoctl is installed
+  get_url:
+    url: https://github.com/projectcalico/calicoctl/releases/download/{{ calico_version }}/calicoctl-linux-amd64
+    dest: /usr/local/bin/calicoctl
+    mode: "+rx"

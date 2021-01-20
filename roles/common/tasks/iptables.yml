@@ -1,0 +1,4 @@
+---
+- name: switch to iptables-legacy
+  command:
+    cmd: update-alternatives --set iptables /usr/sbin/iptables-legacy

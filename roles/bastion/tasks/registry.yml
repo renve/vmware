@@ -1,0 +1,28 @@
+---
+- name: ensure daemon.json file installed and configured to allow insecure registries
+  template:
+    src: daemon.json
+    dest: "/etc/docker/daemon.json"
+    mode: u=rw,g=r,o=
+  notify: restart docker service
+
+- name: restart docker service in case of daemon.json updates
+  meta: flush_handlers
+
+- name: ensure python3-docker package installed and latest version
+  apt:
+    name: python3-docker
+    state: latest
+    update_cache: yes
+
+- name: ensure private registry service created with restart_policy set to always
+  docker_container:
+    name: registry
+    image: registry:2
+    env:
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    ports:
+      - "5000:5000"
+    restart_policy: always
+    volumes:
+      - /mnt/registry:/var/lib/registry

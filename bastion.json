@@ -1,0 +1,65 @@
+{
+    "builders": [
+        {
+            "type": "vmware-iso",
+            "guest_os_type": "ubuntu-64",
+            "iso_url": "http://cdimage.ubuntu.com/ubuntu-legacy-server/releases/20.04/release/ubuntu-20.04.1-legacy-server-amd64.iso",
+            "iso_checksum": "f11bda2f2caed8f420802b59f382c25160b114ccc665dbac9c5046e7fceaced2",
+            "disk_type_id": "4",
+            "disk_size": 50000,
+            "headless": "true",
+            "version": "14",
+
+            "output_directory": "vmdk-bastion",
+            "vm_name": "bastion",
+            "memory": 2048,
+            "cores": 2,
+            "cpus": 2,
+
+            "http_directory": "files",
+
+            "boot_wait": "5s",
+            "boot_command": [
+                "<esc><wait>",
+                "<esc><wait>",
+                "<enter><wait>",
+                "/install/vmlinuz ",
+                "initrd=/install/initrd.gz ",
+                "auto=true ",
+                "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+                "fb=false ",
+                "auto=true ",
+                "language=en ",
+                "locale=en_US ",
+                "priority=critical ",
+                "keymap=us ",
+                "netcfg/get_hostname={{ .Name }} ",
+                "netcfg/get_domain=localdomain ",
+                "debconf/frontend=noninteractive ",
+                "debian-installer/country=US ",
+                "console-setup/ask_detect=false ",
+                "console-keymaps-at/keymap=us ",
+                "DEBCONF_DEBUG=5 ",
+                "<enter>"
+            ],
+
+            "ssh_username": "ansible",
+            "ssh_password": "ansible",
+            "ssh_timeout": "20m",
+
+            "shutdown_command": "sudo shutdown -P now"
+        }
+    ],
+
+    "provisioners": [
+        {
+            "ansible_env_vars": [
+                "ANSIBLE_HOST_KEY_CHECKING=False",
+                "ANSIBLE_SSH_ARGS='-o ForwardAgent=yes'"
+            ],
+            "playbook_file": "bastion.yml",
+            "user": "ansible",
+            "type": "ansible"
+        }
+    ]
+}

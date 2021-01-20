@@ -1,0 +1,22 @@
+---
+cluster_hosts:
+  - address: "172.16.1.131"
+    roles:
+      - controlplane
+      - etcd
+      - worker
+  - address: "172.16.1.130"
+    roles:
+      - controlplane
+      - etcd
+      - worker
+  - address: "172.16.1.129"
+    roles:
+      - controlplane
+      - etcd
+      - worker
+cluster_name: "team-demo"
+
+rancher_url: "rancher.dev.test"
+
+rke_force_configure: false

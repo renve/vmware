@@ -1,0 +1,10 @@
+---
+helm_gpg_key_fingerprint: 81BF832E2F19CD2AA0471959294AC4827C1A168A
+
+kubectl_version: "v{{ rke_kubernetes_version }}"
+
+rke_binary_url: "https://github.com/rancher/rke/releases/download/{{ rke_release }}/rke_linux-amd64"
+rke_kubernetes_version: "1.19.3"
+rke_release: v1.2.2
+kompose_version: v1.22.0
+calico_version: v3.16.6

@@ -1,0 +1,15 @@
+- name: ensure cis_ubuntu_2004 playbook applied to bastion before continue
+  import_playbook: cis_ubuntu_2004.yml
+
+- name: ensure required packages, binaries and configurations installed
+  hosts:
+    - bastion_host
+    # NOTE: default is needed to provision machines using Packer automation.
+    - default
+  roles:
+    - common
+    - bastion
+  gather_facts: false
+  vars:
+    registry_address: 127.0.0.1:5000
+  become: true

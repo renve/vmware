@@ -1,0 +1,9 @@
+---
+- name: Add to prevent network-manager from interfering with interfaces
+  blockinfile:
+  path: /etc/NetworkManager/conf.d/calico.conf
+  create: true
+  block: | 
+    [keyfile]
+    unmanaged-devices=interface-name:cali*;interface-name:tunl*;interface-name:vxlan.calico
+  notify: restart network service

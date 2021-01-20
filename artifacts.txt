@@ -1,0 +1,10 @@
+files/ansible.id_rsa
+files/ansible.id_rsa.pub
+group_vars/all.yml
+group_vars/cluster_hosts.yml
+roles/rancher-on-rke/templates/cluster.yml
+roles/rancher-on-rke/templates/daemon.json
+roles/rancher-on-rke/handlers/main.yml
+roles/rancher-on-rke/tasks/main.yml
+rancher-on-rke.yml
+staging.ini

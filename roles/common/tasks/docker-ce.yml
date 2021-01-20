@@ -1,0 +1,27 @@
+---
+- name: ensure Docker CE GPG APT key installed and expected version
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    id: "{{ docker_gpg_key_fingerprint }}"
+    state: present
+
+- name: ensure Docker CE APT repository configuration installed
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu focal stable
+    state: present
+
+- name: ensure docker-ce and related packages installed and latest versions
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    state: latest
+    update_cache: yes
+
+- name: ensure {{ ansible_user }} account present in docker and sudo groups
+  user:
+    name: "{{ ansible_user }}"
+    groups:
+      - docker
+      - sudo

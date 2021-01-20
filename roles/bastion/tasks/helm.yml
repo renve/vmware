@@ -1,0 +1,44 @@
+---
+- name: ensure helm repository GPG APT key installed and expected version
+  apt_key:
+    url: https://baltocdn.com/helm/signing.asc
+    id: "{{ helm_gpg_key_fingerprint }}"
+    state: present
+
+- name: ennsure helm package repository present in sources list
+  apt_repository:
+    repo: deb https://baltocdn.com/helm/stable/debian/ all main
+    state: present
+    filename: helm-stable-debian
+
+- name: ensure helm package installed and latest version
+  apt:
+    name: helm
+    update_cache: true
+
+- name: add rancher-stable helm repo
+  command:
+    cmd: helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+
+- name: add jetstack helm repo
+  command:
+    cmd: helm repo add jetstack https://charts.jetstack.io
+
+- name: update helm repos
+  command:
+    cmd: helm repo update
+
+- name: fetch jetstack/cert-manager repo
+  command:
+    cmd: helm fetch jetstack/cert-manager --version v{{ rancher_certmanager_version }} -d {{ temp_dir }}
+
+- name: fetch cert-manager CRDs
+  get_url:
+    # ATTENTION: We need this URL and version hardcoded due to changes in CRDs locations. DO NOT CHANGE WITHOUT TESTING.
+    url: "https://raw.githubusercontent.com/jetstack/cert-manager/release-0.12/deploy/manifests/00-crds.yaml"
+    dest: "{{ temp_dir }}/cert-manager/cert-manager-crd.yaml"
+    mode: 0644
+
+- name: fetch rancher-stable helm chart
+  command:
+    cmd: helm fetch rancher-stable/rancher -d {{ temp_dir }} --version {{ rancher_version }}
